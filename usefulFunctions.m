@@ -22,19 +22,19 @@ classdef usefulFunctions
         % check if sound is playing, then only plot new marker
         if strcmp(player.Running, 'on')
             % get the handle of current marker and delete the marker
+            %axes = get(figHandle,'Tag','audioAxes')
             hMarker = findobj(figHandle, 'Color', 'r');
             delete(hMarker);
-            
             % get the currently playing sample
             x = player.CurrentSample;
-            
             % plot the new marker
+            display(figHandle);
             plot(repmat(x, size(plotdata)), plotdata, 'r');
         end
 
     end
         
-    %% 
+    %% Shows error in message dialog 
     function showNoFileError    
         msgbox('No File Loaded. Please load an audio file and try again.','Error');                      
     end
