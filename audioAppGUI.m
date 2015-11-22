@@ -22,7 +22,7 @@ function varargout = audioAppGUI(varargin)
 
 % Edit the above text to modify the response to help audioAppGUI
 
-% Last Modified by GUIDE v2.5 21-Nov-2015 20:44:18
+% Last Modified by GUIDE v2.5 22-Nov-2015 10:24:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -202,6 +202,7 @@ global audioPlayerObject;
 global plotdata;
 global playbackSpeed;
 global volume; 
+selectedDevId = audiodevinfo(0,get(handles.outputDevList,'Value')) 
 
 axes(handles.audioAxes);
 cla;
@@ -210,7 +211,9 @@ if(isempty(soundStream))
     usefulFunctions.showNoFileError;
 else
     audioPlayerObject = audioplayer(soundStream * volume,sampleRate * playbackSpeed);
+    set(audioPlayerObject,'DeviceID',selectedDevId);
     play(audioPlayerObject);
+    set(handles.outputDevList,'Enable','off');
     set(handles.sampleRateValue,'String',sampleRate);
 end
 
@@ -255,6 +258,7 @@ global soundStream;
 global sampleRate;
 global filename;
 global plotdata;
+global audioPlayerObject;
 
 [filename, pathname] = ...
     uigetfile({'*.wav';'*.mp3'},'Audio Track Selector');
@@ -273,7 +277,7 @@ else
     axis = findobj(gcf,'Tag','audioAxes')
     audioPlayerObject.TimerFcn = {@usefulFunctions.plotMarker,audioPlayerObject, axis, plotdata};
     audioPlayerObject.TimerPeriod = 0.01; % period of the timer in seconds
-    display(gcf);
+    %display(gcf);
     gcf; hold on;
     plot(soundStream,'b'); % plot audio data
     title('Audio Data');
@@ -307,7 +311,11 @@ function pauseButton_Callback(hObject, eventdata, handles)
 % hObject    handle to pauseButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global audioPlayerObject
+global audioPlayerObject;
+global soundStream;
+global volume;
+global playbackSpeed;
+global sampleRate;
 if(isempty(audioPlayerObject))
     usefulFunctions.showNoFileError
 else
@@ -335,6 +343,7 @@ else
     stop(audioPlayerObject);
     set(handles.pauseButton,'string','Pause');
     plot(soundStream,'b');
+    set(handles.outputDevList,'Enable','on');
 end
 
 % --- Executes when user attempts to close mainFigure.
@@ -354,10 +363,24 @@ function playbackSpeedSlider_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global playbackSpeed;
+global audioPlayerObject;
+global sampleRate;
+global soundStream;
+global volume;
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 set(handles.playbackSpeedNoText,'String',get(hObject,'Value') );
 playbackSpeed = get(hObject,'Value');
+
+if(isempty(audioPlayerObject))
+    
+else   
+    if strcmp(audioPlayerObject.Running, 'on')
+        currentSample = get(audioPlayerObject,'CurrentSample') / sampleRate;
+        audioPlayerObject = audioplayer(soundStream * volume, sampleRate * playbackSpeed);
+        play(audioPlayerObject,sampleRate * currentSample);
+    end
+end
 
 
 
@@ -454,11 +477,11 @@ volume = hObject.Value;
 
 if(isempty(audioPlayerObject))
     
-else    
-    audioPlayerObject = audioplayer(soundStream * volume, sampleRate);
-    
+else   
     if strcmp(audioPlayerObject.Running, 'on')
-        play(audioPlayerObject,sampleRate);
+        currentSample = get(audioPlayerObject,'CurrentSample') / sampleRate;
+        audioPlayerObject = audioplayer(soundStream * volume, sampleRate * playbackSpeed);
+        play(audioPlayerObject,sampleRate * currentSample);
     end
 end
 
@@ -475,3 +498,28 @@ volume = hObject.Value;
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
+
+
+% --- Executes on button press in pushbutton9.
+function pushbutton9_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton9 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes during object creation, after setting all properties.
+function pushbutton9_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pushbutton9 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+h = imread('soundOut.png');
+set(hObject,'CData',h);
+
+
+% --- Executes during object creation, after setting all properties.
+function pushbutton10_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to pushbutton10 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+h = imread('mic.png');
+set(hObject,'CData',h);
