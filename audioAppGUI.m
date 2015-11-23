@@ -22,7 +22,7 @@ function varargout = audioAppGUI(varargin)
 
 % Edit the above text to modify the response to help audioAppGUI
 
-% Last Modified by GUIDE v2.5 22-Nov-2015 10:24:07
+% Last Modified by GUIDE v2.5 23-Nov-2015 20:06:10
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -202,7 +202,6 @@ global audioPlayerObject;
 global plotdata;
 global playbackSpeed;
 global volume; 
-selectedDevId = audiodevinfo(0,get(handles.outputDevList,'Value')) 
 
 axes(handles.audioAxes);
 cla;
@@ -211,7 +210,6 @@ if(isempty(soundStream))
     usefulFunctions.showNoFileError;
 else
     audioPlayerObject = audioplayer(soundStream * volume,sampleRate * playbackSpeed);
-    set(audioPlayerObject,'DeviceID',selectedDevId);
     play(audioPlayerObject);
     set(handles.outputDevList,'Enable','off');
     set(handles.sampleRateValue,'String',sampleRate);
@@ -304,6 +302,20 @@ function Save_Callback(hObject, eventdata, handles)
 % hObject    handle to Save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+global soundStream;
+global sampleRate;
+global filename;
+
+if(filename == 0)
+    usefulFunctions.showNoFileError;
+else
+    if(~isempty(soundStream))
+        audiowrite(filename,soundStream,sampleRate);
+    else
+        usefulFunctions.showNoSoundStreamError;
+    end
+end
+
 
 
 % --- Executes on button press in pauseButton.
@@ -409,12 +421,9 @@ function outputDevList_Callback(hObject, eventdata, handles)
 
 % --- Executes during object creation, after setting all properties.
 function outputDevList_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to outputDevList (see GCBO)
+% hObject    handlere to outputDevList (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-% Hint: popupmenu controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
@@ -512,8 +521,8 @@ function pushbutton9_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton9 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-h = imread('soundOut.png');
-set(hObject,'CData',h);
+imgPath = imread('img/soundOut.png');
+set(hObject,'CData',imgPath);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -521,5 +530,34 @@ function pushbutton10_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to pushbutton10 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-h = imread('mic.png');
-set(hObject,'CData',h);
+imgPath = imread('img/mic.png');
+set(hObject,'CData',imgPath);
+
+
+% --- Executes on button press in saveAsButton.
+function saveAsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to saveAsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global soundStream;
+global sampleRate;
+
+filename = uiputfile('/','Save sound to file','newSound.wav');
+if(filename == 0)
+    display('Cancelled selection');
+else
+    if(~isempty(soundStream))
+        audiowrite(filename,soundStream,sampleRate);
+    else
+        usefulFunctions.showNoSoundStreamError;
+    end
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function saveAsButton_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to saveAsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+imgPath = imread('img/save.png');
+set(hObject,'CData',imgPath);

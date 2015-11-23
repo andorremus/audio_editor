@@ -39,5 +39,9 @@ classdef usefulFunctions
         msgbox('No File Loaded. Please load an audio file and try again.','Error');                      
     end
     
+    function showNoSoundStreamError    
+        msgbox('No sound file loaded. Please load an audio file and try again.','Error');                      
+    end
+    
     end
 end
