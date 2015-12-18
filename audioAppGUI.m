@@ -22,7 +22,7 @@ function varargout = audioAppGUI(varargin)
 
 % Edit the above text to modify the response to help audioAppGUI
 
-% Last Modified by GUIDE v2.5 23-Nov-2015 20:06:10
+% Last Modified by GUIDE v2.5 18-Dec-2015 16:46:26
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -203,16 +203,32 @@ global plotdata;
 global playbackSpeed;
 global volume; 
 
+global soundStream2;
+global sampleRate2;
+global audioPlayerObject2;
+global plotdata2;
+
 axes(handles.audioAxes);
 cla;
 
-if(isempty(soundStream))            
-    usefulFunctions.showNoFileError;
+if(get(handles.position2Button,'Value') == 0.0)
+    if(isempty(soundStream))            
+        usefulFunctions.showNoFileError;
+    else
+        audioPlayerObject = audioplayer(soundStream * volume,sampleRate * playbackSpeed);
+        play(audioPlayerObject);
+        set(handles.outputDevList,'Enable','off');
+        set(handles.sampleRateValue,'String',sampleRate);
+    end
 else
-    audioPlayerObject = audioplayer(soundStream * volume,sampleRate * playbackSpeed);
-    play(audioPlayerObject);
-    set(handles.outputDevList,'Enable','off');
-    set(handles.sampleRateValue,'String',sampleRate);
+    if(isempty(soundStream2))            
+        usefulFunctions.showNoFileError;
+    else
+        audioPlayerObject2 = audioplayer(soundStream2 * volume,sampleRate2 * playbackSpeed);
+        play(audioPlayerObject2);
+        set(handles.outputDevList,'Enable','off');
+        set(handles.sampleRateValue,'String',sampleRate);
+    end
 end
 
 % --------------------------------------------------------------------
@@ -256,12 +272,43 @@ global soundStream;
 global sampleRate;
 global filename;
 global plotdata;
+global soundStream2;
+global sampleRate2;
+global filename2;
+global plotdata2;
 global audioPlayerObject;
+global audioPlayerObject2;
 
+x = handles.position1Button.Enable ~= 'on';
 [filename, pathname] = ...
     uigetfile({'*.wav';'*.mp3'},'Audio Track Selector');
 if isequal(filename,0)
     
+elseif(get(handles.position2Button,'value') == 1)
+    [soundStream2,sampleRate2] = audioread(filename);
+    audioPlayerObject2 = audioplayer(soundStream2,sampleRate2);  
+    axis = findobj(gcf,'Tag','audioAxes')
+    audioPlayerObject2.TimerFcn = {@usefulFunctions.plotMarker,audioPlayerObject2, axis, plotdata2};
+    audioPlayerObject2.TimerPeriod = 0.01; % period of the timer in seconds
+    %display(gcf);
+    gcf; hold on;
+    plot(soundStream2,'b'); % plot audio data
+    title('Audio Data');
+    xlabel(strcat('Time (s)'));
+    
+    ylabel('Amplitude');
+    ylimits = get(gca, 'YLim'); % get the y-axis limits
+    plotdata = [ylimits(1):0.1:ylimits(2)];
+    %figure(gcf);
+    hline = plot(zeros(size(plotdata2)), plotdata2, 'r'); % plot the marker
+
+    %plot(soundStream);
+    if isequal(filename,0)
+        disp('User selected Cancel')
+    else
+        disp(['User selected ', fullfile(pathname, filename)])
+        set(handles.audioFileSelectedText2,'String',filename);
+    end
 else
     [soundStream,sampleRate] = audioread(filename);
 
@@ -328,17 +375,38 @@ global soundStream;
 global volume;
 global playbackSpeed;
 global sampleRate;
-if(isempty(audioPlayerObject))
-    usefulFunctions.showNoFileError
-else
-    if(audioPlayerObject.isplaying)
-        pause(audioPlayerObject)
-        set(handles.pauseButton,'string','Resume');
+
+global soundStream2;
+global sampleRate2;
+global audioPlayerObject2;
+
+
+if(get(handles.position2Button,'Value') == 0.0)
+    if(isempty(audioPlayerObject))
+        usefulFunctions.showNoFileError
     else
-        resume(audioPlayerObject)
-        set(handles.pauseButton,'string','Pause');
+        if(audioPlayerObject.isplaying)
+            pause(audioPlayerObject)
+            set(handles.pauseButton,'string','Resume');
+        else
+            resume(audioPlayerObject)
+            set(handles.pauseButton,'string','Pause');
+        end
+        display (audioPlayerObject);
     end
-    display (audioPlayerObject);
+else
+    if(isempty(audioPlayerObject2))
+        usefulFunctions.showNoFileError
+    else
+        if(audioPlayerObject2.isplaying)
+            pause(audioPlayerObject2)
+            set(handles.pauseButton,'string','Resume');
+        else
+            resume(audioPlayerObject2)
+            set(handles.pauseButton,'string','Pause');
+        end
+        display (audioPlayerObject2);
+    end
 end
 
 
@@ -349,13 +417,28 @@ function stopButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global audioPlayerObject;
 global soundStream;
-if(isempty(audioPlayerObject))
-    usefulFunctions.showNoFileError;
+
+global audioPlayerObject2;
+global soundStream2;
+
+if(get(handles.position2Button,'Value') == 0.0)
+    if(isempty(audioPlayerObject))
+        usefulFunctions.showNoFileError;
+    else
+        stop(audioPlayerObject);
+        set(handles.pauseButton,'string','Pause');
+        plot(soundStream,'b');
+        set(handles.outputDevList,'Enable','on');
+    end
 else
-    stop(audioPlayerObject);
-    set(handles.pauseButton,'string','Pause');
-    plot(soundStream,'b');
-    set(handles.outputDevList,'Enable','on');
+    if(isempty(audioPlayerObject2))
+        usefulFunctions.showNoFileError;
+    else
+        stop(audioPlayerObject2);
+        set(handles.pauseButton,'string','Pause');
+        plot(soundStream2,'b');
+        set(handles.outputDevList,'Enable','on');
+    end
 end
 
 % --- Executes when user attempts to close mainFigure.
@@ -561,3 +644,12 @@ function saveAsButton_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 imgPath = imread('img/save.png');
 set(hObject,'CData',imgPath);
+
+
+% --- Executes on button press in position2Button.
+function position2Button_Callback(hObject, eventdata, handles)
+% hObject    handle to position2Button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of position2Button
