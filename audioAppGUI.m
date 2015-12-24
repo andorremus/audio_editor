@@ -22,7 +22,7 @@ function varargout = audioAppGUI(varargin)
 
 % Edit the above text to modify the response to help audioAppGUI
 
-% Last Modified by GUIDE v2.5 18-Dec-2015 16:46:26
+% Last Modified by GUIDE v2.5 24-Dec-2015 10:31:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -50,25 +50,24 @@ function audioAppGUI_OpeningFcn(hObject, eventdata, handles, varargin)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to audioAppGUI (see VARARGIN)
-global volume;
-global sampleRate;
-global audioPlayerObject;
-global playbackSpeed;
-global fileSelected;
-global outputDeviceSelId;
-global soundStream;
+
+% Initialize global variables
+global musicData1;
+global musicData2;
+global editorData;
+
+musicData1 = MusicData(0,0,0,0,'');
+musicData2 = MusicData(0,0,0,0,'');
+editorData = EditorData(1.0,1.0,0);
+editorData.outputDeviceSelId = 0;
+
+
 
 % Choose default command line output for audioAppGUI
 handles.output = hObject;
 
 % Update handles structure
 guidata(hObject, handles);
-
-% This sets up the initial plot - only do when we are invisible
-% so window can get raised using audioAppGUI.
-%if strcmp(get(hObject,'Visible'),'off')
-%    plot(rand(5));
-%end
 
 % UIWAIT makes audioAppGUI wait for user response (see UIRESUME)
 % uiwait(handles.mainFigure);
@@ -82,36 +81,6 @@ function varargout = audioAppGUI_OutputFcn(hObject, eventdata, handles)
 
 % Get default command line output from handles structure
 varargout{1} = handles.output;
-
-% --- Executes on button press in pushbutton1.
-function pushbutton1_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-axes(handles.audioAxes);
-cla;
-
-popup_sel_index = get(handles.popupmenu1, 'Value');
-switch popup_sel_index
-    case 1
-        plot(rand(5));
-    case 2
-        plot(sin(1:0.01:25.99));
-    case 3
-        bar(1:.5:10);
-    case 4
-        plot(membrane);
-    case 5
-        surf(peaks);
-end
-
-
-% --------------------------------------------------------------------
-function FileMenu_Callback(hObject, eventdata, handles)
-% hObject    handle to FileMenu (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
 
 % --------------------------------------------------------------------
 function OpenMenuItem_Callback(hObject, eventdata, handles)
@@ -145,15 +114,6 @@ end
 delete(handles.mainFigure)
 
 
-% --- Executes on selection change in popupmenu1.
-function popupmenu1_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu1 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = get(hObject,'String') returns popupmenu1 contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu1
-
 
 % --- Executes during object creation, after setting all properties.
 function popupmenu1_CreateFcn(hObject, eventdata, handles)
@@ -167,69 +127,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-set(hObject, 'String', {'plot(rand(5))', 'plot(sin(1:0.01:25))', 'bar(1:.5:10)', 'plot(membrane)', 'surf(peaks)'});
-
-
-% --- Executes on key press with focus on popupmenu1 and none of its controls.
-function popupmenu1_KeyPressFcn(hObject, eventdata, handles)
-% hObject    handle to popupmenu1 (see GCBO)
-% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
-%	Key: name of the key that was pressed, in lower case
-%	Character: character interpretation of the key(s) that was pressed
-%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on key press with focus on pushbutton1 and none of its controls.
-function pushbutton1_KeyPressFcn(hObject, eventdata, handles)
-% hObject    handle to pushbutton1 (see GCBO)
-% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
-%	Key: name of the key that was pressed, in lower case
-%	Character: character interpretation of the key(s) that was pressed
-%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --- Executes on button press in playButton.
-function playButton_Callback(hObject, eventdata, handles)
-% hObject    handle to playButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-global soundStream;
-global sampleRate;
-global audioPlayerObject;
-global plotdata;
-global playbackSpeed;
-global volume; 
-
-global soundStream2;
-global sampleRate2;
-global audioPlayerObject2;
-global plotdata2;
-
-axes(handles.audioAxes);
-cla;
-
-if(get(handles.position2Button,'Value') == 0.0)
-    if(isempty(soundStream))            
-        usefulFunctions.showNoFileError;
-    else
-        audioPlayerObject = audioplayer(soundStream * volume,sampleRate * playbackSpeed);
-        play(audioPlayerObject);
-        set(handles.outputDevList,'Enable','off');
-        set(handles.sampleRateValue,'String',sampleRate);
-    end
-else
-    if(isempty(soundStream2))            
-        usefulFunctions.showNoFileError;
-    else
-        audioPlayerObject2 = audioplayer(soundStream2 * volume,sampleRate2 * playbackSpeed);
-        play(audioPlayerObject2);
-        set(handles.outputDevList,'Enable','off');
-        set(handles.sampleRateValue,'String',sampleRate);
-    end
-end
 
 % --------------------------------------------------------------------
 
@@ -244,8 +141,8 @@ function Exit_Callback(hObject, eventdata, handles)
 % hObject    handle to Exit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-clear all;
 close all;
+clear all;
 
 % --------------------------------------------------------------------
 function New_File_Callback(hObject, eventdata, handles)
@@ -257,90 +154,82 @@ fid = fopen( 'new.wav', 'w' );
 %fclose(fid);
 
 % --------------------------------------------------------------------
-function Edit_Callback(hObject, eventdata, handles)
-% hObject    handle to Edit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
-% --------------------------------------------------------------------
 function Open_Callback(hObject, eventdata, handles)
 % hObject    handle to Open (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global soundStream;
-global sampleRate;
-global filename;
-global plotdata;
-global soundStream2;
-global sampleRate2;
-global filename2;
-global plotdata2;
-global audioPlayerObject;
-global audioPlayerObject2;
+global editorData;
+global musicData1;
+global musicData2;
 
-x = handles.position1Button.Enable ~= 'on';
-[filename, pathname] = ...
+% get the file to be opened
+[fileSelected, pathname] = ...
     uigetfile({'*.wav';'*.mp3'},'Audio Track Selector');
-if isequal(filename,0)
-    
-elseif(get(handles.position2Button,'value') == 1)
-    [soundStream2,sampleRate2] = audioread(filename);
-    audioPlayerObject2 = audioplayer(soundStream2,sampleRate2);  
+if isequal(fileSelected,0)
+    % If there is no file selected do nothing    
+elseif(get(handles.position2Button,'Value') == 1.0)
+    % If position 2 is selected set the variables for the second musicData
+    % object 
+    [musicData2.soundStream,musicData2.sampleRate] = audioread(fileSelected);
+    musicData2.audioPlayer = audioplayer(musicData2.soundStream,musicData2.sampleRate);  
     axis = findobj(gcf,'Tag','audioAxes')
-    audioPlayerObject2.TimerFcn = {@usefulFunctions.plotMarker,audioPlayerObject2, axis, plotdata2};
-    audioPlayerObject2.TimerPeriod = 0.01; % period of the timer in seconds
+    musicData2.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData2.audioPlayer, axis, musicData2.plotdata};
+    musicData2.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
     %display(gcf);
     gcf; hold on;
-    plot(soundStream2,'b'); % plot audio data
+    plot(musicData2.soundStream,'b'); % plot audio data
     title('Audio Data');
     xlabel(strcat('Time (s)'));
     
     ylabel('Amplitude');
     ylimits = get(gca, 'YLim'); % get the y-axis limits
-    plotdata = [ylimits(1):0.1:ylimits(2)];
+    musicData2.plotdata = [ylimits(1):0.1:ylimits(2)];
     %figure(gcf);
-    hline = plot(zeros(size(plotdata2)), plotdata2, 'r'); % plot the marker
+    hline = plot(zeros(size(musicData2.plotdata)), musicData2.plotdata, 'r'); % plot the marker
 
     %plot(soundStream);
-    if isequal(filename,0)
+    if isequal(fileSelected,0)
         disp('User selected Cancel')
     else
-        disp(['User selected ', fullfile(pathname, filename)])
-        set(handles.audioFileSelectedText2,'String',filename);
+        disp(['User selected ', fullfile(pathname, fileSelected)])
+        set(handles.audioFileSelectedText2,'String',fileSelected);
     end
+    
+    editorData.musicData = musicData2;
 else
-    [soundStream,sampleRate] = audioread(filename);
-
-    %% create the plot of audio samples
-   
+    % If position 1 is selected set the variables for the first musicData
+    % object 
+    
+    [musicData1.soundStream,musicData1.sampleRate] = audioread(fileSelected);
+  
     %soundDetails = wav
     %h = findobj(gcf,'Tag','audioAxes');
     
-    audioPlayerObject = audioplayer(soundStream, sampleRate);
-    audioPlayerObject.TimerPeriod = 0.01;    
+    musicData1.audioPlayer = audioplayer(musicData1.soundStream, musicData1.sampleRate);
+    musicData1.audioPlayer.TimerPeriod = 0.01;    
     axis = findobj(gcf,'Tag','audioAxes')
-    audioPlayerObject.TimerFcn = {@usefulFunctions.plotMarker,audioPlayerObject, axis, plotdata};
-    audioPlayerObject.TimerPeriod = 0.01; % period of the timer in seconds
+    musicData1.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData1.audioPlayer, axis, musicData1.plotdata};
+    musicData1.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
     %display(gcf);
     gcf; hold on;
-    plot(soundStream,'b'); % plot audio data
+    plot(musicData1.soundStream,'b'); % plot audio data
     title('Audio Data');
     xlabel(strcat('Time (s)'));
     
     ylabel('Amplitude');
     ylimits = get(gca, 'YLim'); % get the y-axis limits
-    plotdata = [ylimits(1):0.1:ylimits(2)];
+    musicData1.plotdata = [ylimits(1):0.1:ylimits(2)];
     %figure(gcf);
-    hline = plot(zeros(size(plotdata)), plotdata, 'r'); % plot the marker
+    hline = plot(zeros(size(musicData1.plotdata)), musicData1.plotdata, 'r'); % plot the marker
 
     %plot(soundStream);
-    if isequal(filename,0)
+    if isequal(fileSelected,0)
         disp('User selected Cancel')
     else
-        disp(['User selected ', fullfile(pathname, filename)])
-        set(handles.audioFileSelectedText,'String',filename);
+        disp(['User selected ', fullfile(pathname, fileSelected)])
+        set(handles.audioFileSelectedText,'String',fileSelected);
     end
+    editorData.musicData = musicData1;
 end
 
 
@@ -349,20 +238,40 @@ function Save_Callback(hObject, eventdata, handles)
 % hObject    handle to Save (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global soundStream;
-global sampleRate;
-global filename;
+global editorData;
 
-if(filename == 0)
+if(editorData.musicData.filename == 0)
     usefulFunctions.showNoFileError;
 else
     if(~isempty(soundStream))
-        audiowrite(filename,soundStream,sampleRate);
+        audiowrite(editorData.musicData.filename,editorData.musicData.soundStream,editorData.musicData.sampleRate);
     else
         usefulFunctions.showNoSoundStreamError;
-    end
+    end    
 end
 
+% --- Executes on button press in playButton.
+function playButton_Callback(hObject, eventdata, handles)
+% hObject    handle to playButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+global editorData;
+
+axes(handles.audioAxes);
+cla;
+
+% If the sound stream is empty show an error    
+if(isempty(editorData.musicData.soundStream))              
+    usefulFunctions.showNoFileError;    
+else
+    % otherwise create a new audioplayer object to be assigned to the
+    % global editorData var and play it
+    editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream ,editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);
+    play(editorData.musicData.audioPlayer);
+    % set UI fields
+    set(handles.outputDevList,'Enable','off');
+    set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
+end
 
 
 % --- Executes on button press in pauseButton.
@@ -370,75 +279,38 @@ function pauseButton_Callback(hObject, eventdata, handles)
 % hObject    handle to pauseButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global audioPlayerObject;
-global soundStream;
-global volume;
-global playbackSpeed;
-global sampleRate;
+global editorData;
 
-global soundStream2;
-global sampleRate2;
-global audioPlayerObject2;
-
-
-if(get(handles.position2Button,'Value') == 0.0)
-    if(isempty(audioPlayerObject))
-        usefulFunctions.showNoFileError
-    else
-        if(audioPlayerObject.isplaying)
-            pause(audioPlayerObject)
-            set(handles.pauseButton,'string','Resume');
-        else
-            resume(audioPlayerObject)
-            set(handles.pauseButton,'string','Pause');
-        end
-        display (audioPlayerObject);
-    end
+if(isempty(editorData.musicData.audioPlayer))        
+    usefulFunctions.showNoFileError
 else
-    if(isempty(audioPlayerObject2))
-        usefulFunctions.showNoFileError
+    if(editorData.musicData.audioPlayer.isplaying)
+        pause(editorData.musicData.audioPlayer)
+        set(handles.pauseButton,'string','Resume');        
+    elseif(get(editorData.musicData.audioPlayer,'CurrentSample') == 1)
+        usefulFunctions.showStoppedError;       
     else
-        if(audioPlayerObject2.isplaying)
-            pause(audioPlayerObject2)
-            set(handles.pauseButton,'string','Resume');
-        else
-            resume(audioPlayerObject2)
-            set(handles.pauseButton,'string','Pause');
-        end
-        display (audioPlayerObject2);
+        resume(editorData.musicData.audioPlayer)
+        set(handles.pauseButton,'string','Pause');
     end
+    display(editorData.musicData.audioPlayer);    
+    set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
 end
-
 
 % --- Executes on button press in stopButton.
 function stopButton_Callback(hObject, eventdata, handles)
 % hObject    handle to stopButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global audioPlayerObject;
-global soundStream;
+global editorData;
 
-global audioPlayerObject2;
-global soundStream2;
-
-if(get(handles.position2Button,'Value') == 0.0)
-    if(isempty(audioPlayerObject))
-        usefulFunctions.showNoFileError;
-    else
-        stop(audioPlayerObject);
-        set(handles.pauseButton,'string','Pause');
-        plot(soundStream,'b');
-        set(handles.outputDevList,'Enable','on');
-    end
+if(isempty(editorData.musicData.audioPlayer))
+    usefulFunctions.showNoFileError;
 else
-    if(isempty(audioPlayerObject2))
-        usefulFunctions.showNoFileError;
-    else
-        stop(audioPlayerObject2);
-        set(handles.pauseButton,'string','Pause');
-        plot(soundStream2,'b');
-        set(handles.outputDevList,'Enable','on');
-    end
+    stop(editorData.musicData.audioPlayer);
+    set(handles.pauseButton,'string','Pause');
+    plot(editorData.musicData.soundStream,'b');
+    set(handles.outputDevList,'Enable','on');
 end
 
 % --- Executes when user attempts to close mainFigure.
@@ -449,7 +321,6 @@ function mainFigure_CloseRequestFcn(hObject, eventdata, handles)
 
 % Hint: delete(hObject) closes the figure
 delete(hObject);
-clear all;
 
 
 % --- Executes on slider movement.
@@ -457,26 +328,30 @@ function playbackSpeedSlider_Callback(hObject, eventdata, handles)
 % hObject    handle to playbackSpeedSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global playbackSpeed;
-global audioPlayerObject;
-global sampleRate;
-global soundStream;
-global volume;
+global editorData;
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 set(handles.playbackSpeedNoText,'String',get(hObject,'Value') );
-playbackSpeed = get(hObject,'Value');
+currentPlaybackSpeed = get(hObject,'Value');
+currentSample = get(editorData.musicData.audioPlayer,'CurrentSample') / editorData.musicData.sampleRate;
 
-if(isempty(audioPlayerObject))
+if(isempty(editorData.musicData))
     
 else   
-    if strcmp(audioPlayerObject.Running, 'on')
-        currentSample = get(audioPlayerObject,'CurrentSample') / sampleRate;
-        audioPlayerObject = audioplayer(soundStream * volume, sampleRate * playbackSpeed);
-        play(audioPlayerObject,sampleRate * currentSample);
-    end
+     if(editorData.musicData.audioPlayer.isplaying)           
+         %%editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume ) * editorData.volume);
+         editorData.musicData.sampleRate = ((editorData.musicData.sampleRate / editorData.playbackSpeed )* currentPlaybackSpeed);         
+         editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);         
+         play(editorData.musicData.audioPlayer,currentSample * editorData.musicData.audioPlayer.sampleRate);    
+     else         
+        %editorData.musicData.soundStream = (editorData.musicData.soundStream / editorData.volume) * curr;
+        editorData.musicData.sampleRate = (editorData.musicData.sampleRate / editorData.playbackSpeed) * currentPlaybackSpeed;
+     end  
+     
+     set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
 end
 
+editorData.playbackSpeed = currentPlaybackSpeed;
 
 
 % --- Executes during object creation, after setting all properties.
@@ -484,12 +359,12 @@ function playbackSpeedSlider_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to playbackSpeedSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-global playbackSpeed;
+global editorData;
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-playbackSpeed = get(hObject,'Value');
+editorData.playbackSpeed = get(hObject,'Value');
 
 
 % --- Executes on selection change in outputDevList.
@@ -500,7 +375,9 @@ function outputDevList_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns outputDevList contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from outputDevList
-
+% Sets the output device
+global editorData;
+editorData.outputDeviceSelId = hObject.Value - 1; 
 
 % --- Executes during object creation, after setting all properties.
 function outputDevList_CreateFcn(hObject, eventdata, handles)
@@ -514,8 +391,8 @@ end
 x = audiodevinfo(0); % get the number of available output devices for the loop
 if x > 0
     for i = 1:x
-        outDevArr{i} =  audiodevinfo(0,(i-1)); % insert out dev into array        
-    end
+        outDevArr{i} = audiodevinfo(0,(i-1)); % insert out dev into array        
+    end 
     set(hObject, 'String', outDevArr); % populate the menu with the string array
 end
 
@@ -559,23 +436,26 @@ function volumeSlider_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-global audioPlayerObject;
-global soundStream;
-global volume;
-global playbackSpeed;
-global sampleRate;
+global editorData;
 
-volume = hObject.Value;
+currentVolume = hObject.Value;
 
-if(isempty(audioPlayerObject))
+if(isempty(editorData.musicData.audioPlayer))
     
 else   
-    if strcmp(audioPlayerObject.Running, 'on')
-        currentSample = get(audioPlayerObject,'CurrentSample') / sampleRate;
-        audioPlayerObject = audioplayer(soundStream * volume, sampleRate * playbackSpeed);
-        play(audioPlayerObject,sampleRate * currentSample);
+    if(editorData.musicData.audioPlayer.isplaying)
+        pause(editorData.musicData.audioPlayer);
+        editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume) * currentVolume);
+        %editorData.musicData.sampleRate = (editorData.musicData.sampleRate * editorData.playbackSpeed);
+        editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate);
+        resume(editorData.musicData.audioPlayer);
+    else        
+        editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume) * currentVolume );
+        %editorData.musicData.sampleRate = (editorData.musicData.sampleRate * editorData.playbackSpeed);
     end
+    
 end
+editorData.volume = currentVolume;
 
 
 
@@ -584,8 +464,8 @@ function volumeSlider_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to volumeSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-global volume;
-volume = hObject.Value;
+global editorData;
+editorData.volume = hObject.Value;
 % Hint: slider controls usually have a light gray background.
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
@@ -622,15 +502,14 @@ function saveAsButton_Callback(hObject, eventdata, handles)
 % hObject    handle to saveAsButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-global soundStream;
-global sampleRate;
+global editorData;
 
 filename = uiputfile('/','Save sound to file','newSound.wav');
 if(filename == 0)
     display('Cancelled selection');
 else
-    if(~isempty(soundStream))
-        audiowrite(filename,soundStream,sampleRate);
+    if(~isempty(editorData.musicData.soundStream))
+        audiowrite(editorData.musicData.filename,editorData.musicData.soundStream,editorData.musicData.sampleRate);
     else
         usefulFunctions.showNoSoundStreamError;
     end
@@ -653,3 +532,37 @@ function position2Button_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 % Hint: get(hObject,'Value') returns toggle state of position2Button
+global editorData;
+global musicData2;
+
+editorData.musicData = musicData2;
+
+
+% --- Executes on key press with focus on position1Button and none of its controls.
+function position1Button_KeyPressFcn(hObject, eventdata, handles)
+% hObject    handle to position1Button (see GCBO)
+% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
+%	Key: name of the key that was pressed, in lower case
+%	Character: character interpretation of the key(s) that was pressed
+%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in position1Button.
+function position1Button_Callback(hObject, eventdata, handles)
+% hObject    handle to position1Button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of position1Button
+global editorData;
+global musicData1;
+
+if(editorData.musicData.audioPlayer.isplaying)
+    stop(editorData.musicData.audioPlayer)
+    set(handles.pauseButton,'string','Pause');
+end
+
+editorData.musicData = musicData1;
+
+set(handles.sampleRateValue,'string',editorData.musicData.sampleRate);

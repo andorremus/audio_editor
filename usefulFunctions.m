@@ -43,5 +43,9 @@ classdef usefulFunctions
         msgbox('No sound file loaded. Please load an audio file and try again.','Error');                      
     end
     
+    function showStoppedError    
+        msgbox('The player is stopped. You can only pause/resume if the sound is playing','Warning');                      
+    end
+    
     end
 end
