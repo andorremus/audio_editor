@@ -8,6 +8,7 @@ classdef MusicData
         audioPlayer;
         plotdata;
         filename;
+        duration;
     end
     
     methods
@@ -22,6 +23,24 @@ classdef MusicData
                 error('Invalid number of arguments.');                
             end            
         end      
+        
+        function r = GetDurationAsStr(obj)
+            minutes = int16( ( length(obj.soundStream) / obj.sampleRate ) / 60 );
+            seconds = int16( mod( length(obj.soundStream) / obj.sampleRate,60) );
+            r = strcat(int2str(minutes),'min',int2str(seconds),'s');
+        end
+        
+        function r = GetDurationSec(obj)
+            seconds = int16( mod( length(obj.soundStream) / obj.sampleRate,60) );
+            r = int2str(seconds);
+        end
+        
+        function r = GetDurationMin(obj)
+            minutes = int16( ( length(obj.soundStream) / obj.sampleRate ) / 60 );
+            r = int2str(minutes);
+        end
+        
+        
         
     end
     

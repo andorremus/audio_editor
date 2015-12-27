@@ -17,12 +17,12 @@ function varargout = audioAppGUI(varargin)
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
-%
+%           
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
 % Edit the above text to modify the response to help audioAppGUI
 
-% Last Modified by GUIDE v2.5 24-Dec-2015 10:31:11
+% Last Modified by GUIDE v2.5 27-Dec-2015 01:05:57
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -172,22 +172,20 @@ elseif(get(handles.position2Button,'Value') == 1.0)
     % object 
     [musicData2.soundStream,musicData2.sampleRate] = audioread(fileSelected);
     musicData2.audioPlayer = audioplayer(musicData2.soundStream,musicData2.sampleRate);  
-    axis = findobj(gcf,'Tag','audioAxes')
+    axis = findobj(gcf,'Tag','audioAxesPos2')
     musicData2.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData2.audioPlayer, axis, musicData2.plotdata};
     musicData2.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
     %display(gcf);
     gcf; hold on;
     plot(musicData2.soundStream,'b'); % plot audio data
     title('Audio Data');
-    xlabel(strcat('Time (s)'));
-    
+    xlabel(strcat('Time (s)'));    
     ylabel('Amplitude');
     ylimits = get(gca, 'YLim'); % get the y-axis limits
     musicData2.plotdata = [ylimits(1):0.1:ylimits(2)];
     %figure(gcf);
     hline = plot(zeros(size(musicData2.plotdata)), musicData2.plotdata, 'r'); % plot the marker
-
-    %plot(soundStream);
+    
     if isequal(fileSelected,0)
         disp('User selected Cancel')
     else
@@ -195,25 +193,25 @@ elseif(get(handles.position2Button,'Value') == 1.0)
         set(handles.audioFileSelectedText2,'String',fileSelected);
     end
     
+    musicData2.filename = fileSelected;
     editorData.musicData = musicData2;
+    set(handles.durationText2,'String',editorData.musicData.GetDurationAsStr);
+    set(handles.durationPos2MinEnd,'String',editorData.musicData.GetDurationMin);
+    set(handles.durationPos2SecEnd,'String',editorData.musicData.GetDurationSec);
 else
     % If position 1 is selected set the variables for the first musicData
     % object 
     
-    [musicData1.soundStream,musicData1.sampleRate] = audioread(fileSelected);
-  
-    %soundDetails = wav
-    %h = findobj(gcf,'Tag','audioAxes');
+    [musicData1.soundStream,musicData1.sampleRate] = audioread(fileSelected); 
     
     musicData1.audioPlayer = audioplayer(musicData1.soundStream, musicData1.sampleRate);
     musicData1.audioPlayer.TimerPeriod = 0.01;    
-    axis = findobj(gcf,'Tag','audioAxes')
+    axis = findobj(gcf,'Tag','audioAxesPos1');
     musicData1.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData1.audioPlayer, axis, musicData1.plotdata};
     musicData1.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
-    %display(gcf);
-    gcf; hold on;
+    
     plot(musicData1.soundStream,'b'); % plot audio data
-    title('Audio Data');
+    title(fileSelected);
     xlabel(strcat('Time (s)'));
     
     ylabel('Amplitude');
@@ -228,9 +226,15 @@ else
     else
         disp(['User selected ', fullfile(pathname, fileSelected)])
         set(handles.audioFileSelectedText,'String',fileSelected);
-    end
-    editorData.musicData = musicData1;
+    end    
+    editorData.musicData = musicData1;   
+    musicData1.filename = fileSelected;
+    set(handles.durationText1,'String',editorData.musicData.GetDurationAsStr);
+    set(handles.durationPos1MinEnd,'String',editorData.musicData.GetDurationMin);
+    set(handles.durationPos1SecEnd,'String',editorData.musicData.GetDurationSec);
 end
+
+
 
 
 % --------------------------------------------------------------------
@@ -243,7 +247,7 @@ global editorData;
 if(editorData.musicData.filename == 0)
     usefulFunctions.showNoFileError;
 else
-    if(~isempty(soundStream))
+    if(~isempty(editorData.musicData.soundStream))
         audiowrite(editorData.musicData.filename,editorData.musicData.soundStream,editorData.musicData.sampleRate);
     else
         usefulFunctions.showNoSoundStreamError;
@@ -257,11 +261,11 @@ function playButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global editorData;
 
-axes(handles.audioAxes);
+axes(handles.audioAxesPos1);
 cla;
 
 % If the sound stream is empty show an error    
-if(isempty(editorData.musicData.soundStream))              
+if(isempty(editorData.musicData))              
     usefulFunctions.showNoFileError;    
 else
     % otherwise create a new audioplayer object to be assigned to the
@@ -281,7 +285,7 @@ function pauseButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global editorData;
 
-if(isempty(editorData.musicData.audioPlayer))        
+if(isempty(editorData.musicData))        
     usefulFunctions.showNoFileError
 else
     if(editorData.musicData.audioPlayer.isplaying)
@@ -304,7 +308,7 @@ function stopButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global editorData;
 
-if(isempty(editorData.musicData.audioPlayer))
+if(isempty(editorData.musicData))
     usefulFunctions.showNoFileError;
 else
     stop(editorData.musicData.audioPlayer);
@@ -333,18 +337,17 @@ global editorData;
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 set(handles.playbackSpeedNoText,'String',get(hObject,'Value') );
 currentPlaybackSpeed = get(hObject,'Value');
-currentSample = get(editorData.musicData.audioPlayer,'CurrentSample') / editorData.musicData.sampleRate;
 
 if(isempty(editorData.musicData))
     
 else   
-     if(editorData.musicData.audioPlayer.isplaying)           
-         %%editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume ) * editorData.volume);
+     if(editorData.musicData.audioPlayer.isplaying)               
+         currentSample = get(editorData.musicData.audioPlayer,'CurrentSample') / editorData.musicData.sampleRate;
          editorData.musicData.sampleRate = ((editorData.musicData.sampleRate / editorData.playbackSpeed )* currentPlaybackSpeed);         
          editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);         
-         play(editorData.musicData.audioPlayer,currentSample * editorData.musicData.audioPlayer.sampleRate);    
+         resumeSample = currentSample * editorData.musicData.audioPlayer.sampleRate;
+         play(editorData.musicData.audioPlayer,resumeSample);    
      else         
-        %editorData.musicData.soundStream = (editorData.musicData.soundStream / editorData.volume) * curr;
         editorData.musicData.sampleRate = (editorData.musicData.sampleRate / editorData.playbackSpeed) * currentPlaybackSpeed;
      end  
      
@@ -429,41 +432,33 @@ end
 
 
 % --- Executes on slider movement.
-function volumeSlider_Callback(hObject, eventdata, handles)
-% hObject    handle to volumeSlider (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+function volumeSlider_Callback(hObject, ~, handles)
 
-% Hints: get(hObject,'Value') returns position of slider
-%        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 global editorData;
-
 currentVolume = hObject.Value;
 
-if(isempty(editorData.musicData.audioPlayer))
+if(isempty(editorData.musicData))
     
 else   
-    if(editorData.musicData.audioPlayer.isplaying)
-        pause(editorData.musicData.audioPlayer);
-        editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume) * currentVolume);
-        %editorData.musicData.sampleRate = (editorData.musicData.sampleRate * editorData.playbackSpeed);
-        editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate);
-        resume(editorData.musicData.audioPlayer);
-    else        
-        editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume) * currentVolume );
-        %editorData.musicData.sampleRate = (editorData.musicData.sampleRate * editorData.playbackSpeed);
-    end
-    
+     if(editorData.musicData.audioPlayer.isplaying)       
+         % Get the current sample before reinitializing the audio player
+         resumeSample = get(editorData.musicData.audioPlayer,'CurrentSample') / editorData.musicData.sampleRate * editorData.musicData.audioPlayer.sampleRate;
+         editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume ) * currentVolume);     
+         editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);        
+         play(editorData.musicData.audioPlayer,resumeSample);    
+     else         
+        editorData.musicData.soundStream = (editorData.musicData.soundStream / editorData.volume) * currentVolume;        
+     end  
+     
+     set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
 end
+
 editorData.volume = currentVolume;
 
 
 
 % --- Executes during object creation, after setting all properties.
-function volumeSlider_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to volumeSlider (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
+function volumeSlider_CreateFcn(hObject, ~, ~)
 global editorData;
 editorData.volume = hObject.Value;
 % Hint: slider controls usually have a light gray background.
@@ -471,25 +466,14 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
-
-% --- Executes on button press in pushbutton9.
-function pushbutton9_Callback(hObject, eventdata, handles)
-% hObject    handle to pushbutton9 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-
 % --- Executes during object creation, after setting all properties.
-function pushbutton9_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to pushbutton9 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
+function pushbutton9_CreateFcn(hObject, ~, ~)
 imgPath = imread('img/soundOut.png');
 set(hObject,'CData',imgPath);
 
 
 % --- Executes during object creation, after setting all properties.
-function pushbutton10_CreateFcn(hObject, eventdata, handles)
+function pushbutton10_CreateFcn(hObject, ~, ~)
 % hObject    handle to pushbutton10 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
@@ -508,8 +492,8 @@ filename = uiputfile('/','Save sound to file','newSound.wav');
 if(filename == 0)
     display('Cancelled selection');
 else
-    if(~isempty(editorData.musicData.soundStream))
-        audiowrite(editorData.musicData.filename,editorData.musicData.soundStream,editorData.musicData.sampleRate);
+    if(~isempty(editorData.musicData))
+        audiowrite(filename,editorData.musicData.soundStream,editorData.musicData.sampleRate);
     else
         usefulFunctions.showNoSoundStreamError;
     end
@@ -535,34 +519,391 @@ function position2Button_Callback(hObject, eventdata, handles)
 global editorData;
 global musicData2;
 
+notEmpty = ~isempty(editorData.musicData);
+if(notEmpty > 0)
+    if(editorData.musicData.soundStream > 0)
+        if(editorData.musicData.audioPlayer.isplaying)
+            stop(editorData.musicData.audioPlayer)
+            set(handles.pauseButton,'string','Pause');
+        end
+    end
+end
+
 editorData.musicData = musicData2;
+set(handles.sampleRateValue,'string',editorData.musicData.sampleRate);
 
 
 % --- Executes on key press with focus on position1Button and none of its controls.
 function position1Button_KeyPressFcn(hObject, eventdata, handles)
-% hObject    handle to position1Button (see GCBO)
-% eventdata  structure with the following fields (see MATLAB.UI.CONTROL.UICONTROL)
-%	Key: name of the key that was pressed, in lower case
-%	Character: character interpretation of the key(s) that was pressed
-%	Modifier: name(s) of the modifier key(s) (i.e., control, shift) pressed
-% handles    structure with handles and user data (see GUIDATA)
 
 
 % --- Executes on button press in position1Button.
 function position1Button_Callback(hObject, eventdata, handles)
-% hObject    handle to position1Button (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
 
-% Hint: get(hObject,'Value') returns toggle state of position1Button
 global editorData;
 global musicData1;
 
-if(editorData.musicData.audioPlayer.isplaying)
-    stop(editorData.musicData.audioPlayer)
-    set(handles.pauseButton,'string','Pause');
+notEmpty = ~isempty(editorData.musicData);
+if(notEmpty > 0)
+    if(editorData.musicData.soundStream > 0)
+        if(editorData.musicData.audioPlayer.isplaying)
+            stop(editorData.musicData.audioPlayer)
+            set(handles.pauseButton,'string','Pause');
+        end
+    end
 end
 
 editorData.musicData = musicData1;
 
 set(handles.sampleRateValue,'string',editorData.musicData.sampleRate);
+%set(handles.durationText1,'String',editorData.musicData.GetDuration);
+
+
+
+function edit1_Callback(hObject, eventdata, handles)
+% hObject    handle to edit1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit1 as text
+%        str2double(get(hObject,'String')) returns contents of edit1 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit2_Callback(hObject, eventdata, handles)
+% hObject    handle to edit2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit2 as text
+%        str2double(get(hObject,'String')) returns contents of edit2 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit3_Callback(hObject, eventdata, handles)
+% hObject    handle to edit3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit3 as text
+%        str2double(get(hObject,'String')) returns contents of edit3 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit3_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function durationPos1MinStart_Callback(hObject, eventdata, handles)
+% hObject    handle to durationPos1MinStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of durationPos1MinStart as text
+%        str2double(get(hObject,'String')) returns contents of durationPos1MinStart as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function durationPos1MinStart_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to durationPos1MinStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function durationPos1SecStart_Callback(hObject, eventdata, handles)
+% hObject    handle to durationPos1SecStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of durationPos1SecStart as text
+%        str2double(get(hObject,'String')) returns contents of durationPos1SecStart as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function durationPos1SecStart_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to durationPos1SecStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function durationPos1MinEnd_Callback(hObject, eventdata, handles)
+% hObject    handle to durationPos1MinEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of durationPos1MinEnd as text
+%        str2double(get(hObject,'String')) returns contents of durationPos1MinEnd as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function durationPos1MinEnd_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to durationPos1MinEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function durationPos1SecEnd_Callback(hObject, eventdata, handles)
+% hObject    handle to durationPos1SecEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of durationPos1SecEnd as text
+%        str2double(get(hObject,'String')) returns contents of durationPos1SecEnd as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function durationPos1SecEnd_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to durationPos1SecEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function durationPos2MinStart_Callback(hObject, eventdata, handles)
+% hObject    handle to durationPos2MinStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of durationPos2MinStart as text
+%        str2double(get(hObject,'String')) returns contents of durationPos2MinStart as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function durationPos2MinStart_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to durationPos2MinStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function durationPos2SecStart_Callback(hObject, eventdata, handles)
+% hObject    handle to durationPos2SecStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of durationPos2SecStart as text
+%        str2double(get(hObject,'String')) returns contents of durationPos2SecStart as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function durationPos2SecStart_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to durationPos2SecStart (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function durationPos2MinEnd_Callback(hObject, eventdata, handles)
+% hObject    handle to durationPos2MinEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of durationPos2MinEnd as text
+%        str2double(get(hObject,'String')) returns contents of durationPos2MinEnd as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function durationPos2MinEnd_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to durationPos2MinEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function durationPos2SecEnd_Callback(hObject, eventdata, handles)
+% hObject    handle to durationPos2SecEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of durationPos2SecEnd as text
+%        str2double(get(hObject,'String')) returns contents of durationPos2SecEnd as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function durationPos2SecEnd_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to durationPos2SecEnd (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in playButtonPos1.
+function playButtonPos1_Callback(hObject, eventdata, handles)
+
+global musicData1;
+global editorData;
+
+if(usefulFunctions.validateMusicData1 == 1)
+    usefulFunctions.showNoFileError;    
+else
+    if(usefulFunctions.validateStartEndPos1(handles) == 1)      
+        minStart = str2num(get(handles.durationPos1MinStart,'String'));
+        secStart = str2num(get(handles.durationPos1SecStart,'String'));
+        totalStart = minStart * 60 + secStart;
+        
+        minEnd = str2num(get(handles.durationPos1MinEnd,'String'));
+        secEnd = str2num(get(handles.durationPos1SecEnd,'String'));
+        totalEnd = minEnd * 60 + secEnd ; 
+        
+        tempAudioPlayer = audioplayer(musicData1.soundStream ,musicData1.sampleRate,16,editorData.outputDeviceSelId);
+        beginningSample = musicData1.sampleRate * totalStart + 80;
+        endSample = musicData1.sampleRate * totalEnd ;
+        if(endSample > length(musicData1.soundStream))
+            endSample = length(musicData1.soundStream);
+        end
+        playblocking(tempAudioPlayer,[beginningSample endSample]);
+        % set UI fields
+        set(handles.outputDevList,'Enable','off');
+        set(handles.sampleRateValue,'String',musicData1.sampleRate);
+    else
+        usefulFunctions.showInvalidNumber;
+    end
+end
+
+
+% --- Executes on button press in playButtonPos2.
+function playButtonPos2_Callback(hObject, eventdata, handles)
+% hObject    handle to playButtonPos2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+global musicData2;
+global editorData;
+
+% validate sound stream 
+if(usefulFunctions.validateMusicData2 == 1)              
+    usefulFunctions.showNoFileError;    
+else
+    if(usefulFunctions.validateStartEndPos2(handles) == 1)      
+        minStart = str2num(get(handles.durationPos2MinStart,'String'));
+        secStart = str2num(get(handles.durationPos2SecStart,'String'));
+        totalStart = minStart * 60 + secStart;
+        
+        minEnd = str2num(get(handles.durationPos2MinEnd,'String'));
+        secEnd = str2num(get(handles.durationPos2SecEnd,'String'));
+        totalEnd = minEnd * 60 + secEnd ;
+        
+        tempAudioPlayer = audioplayer(musicData2.soundStream ,musicData2.sampleRate,16,editorData.outputDeviceSelId);
+        beginningSample = (musicData2.sampleRate * totalStart ) + 80;
+        endSample = musicData2.sampleRate * totalEnd ;
+        if(endSample > length(musicData2.soundStream))
+            endSample = length(musicData2.soundStream);
+        end
+        playblocking(tempAudioPlayer,[beginningSample endSample]);
+        % set UI fields
+        set(handles.sampleRateValue,'String',musicData2.sampleRate);
+    else
+        usefulFunctions.showInvalidNumber;
+    end
+end
+
+
+% --------------------------------------------------------------------
+function Edit_Callback(hObject, eventdata, handles)
+
+
+% --- Executes on button press in joinButton.
+function joinButton_Callback(hObject, eventdata, handles)
+
+global editorData;
+global musicData1;
+global musicData2;
+
+
+if(usefulFunctions.validateStartEndPos1(handles) == 0 || usefulFunctions.validateStartEndPos2(handles) == 0 )
+    usefulFunctions.showInvalidNumber;
+else
+    if(usefulFunctions.validateSounds == 1)
+        usefulFunctions.showNoSoundStreamError;        
+    else
+        usefulFunctions.mergeSounds(1,handles);
+               
+    end   
+end
+
+    

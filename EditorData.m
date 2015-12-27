@@ -20,7 +20,7 @@ classdef EditorData
                     error('Value must be numeric')           
                 end                
             end                       
-        end    
+        end
     end
     
 end
