@@ -22,7 +22,7 @@ function varargout = audioAppGUI(varargin)
 
 % Edit the above text to modify the response to help audioAppGUI
 
-% Last Modified by GUIDE v2.5 27-Dec-2015 01:05:57
+% Last Modified by GUIDE v2.5 27-Dec-2015 15:56:07
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -161,6 +161,8 @@ function Open_Callback(hObject, eventdata, handles)
 global editorData;
 global musicData1;
 global musicData2;
+global axis2;   
+global axis1;
 
 % get the file to be opened
 [fileSelected, pathname] = ...
@@ -169,22 +171,25 @@ if isequal(fileSelected,0)
     % If there is no file selected do nothing    
 elseif(get(handles.position2Button,'Value') == 1.0)
     % If position 2 is selected set the variables for the second musicData
-    % object 
+    % object
+    axes = axis2;    
+    cla(axes);
     [musicData2.soundStream,musicData2.sampleRate] = audioread(fileSelected);
     musicData2.audioPlayer = audioplayer(musicData2.soundStream,musicData2.sampleRate);  
-    axis = findobj(gcf,'Tag','audioAxesPos2')
-    musicData2.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData2.audioPlayer, axis, musicData2.plotdata};
+    %axis = findobj(gcf,'Tag','audioAxesPos2')
+    musicData2.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData2.audioPlayer, axes, musicData2.plotdata};
     musicData2.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
     %display(gcf);
-    gcf; hold on;
-    plot(musicData2.soundStream,'b'); % plot audio data
-    title('Audio Data');
-    xlabel(strcat('Time (s)'));    
-    ylabel('Amplitude');
-    ylimits = get(gca, 'YLim'); % get the y-axis limits
+    %gcf; hold on;
+    plot(musicData2.soundStream,'b','Parent',axes); % plot audio data
+    title(axes,fileSelected);
+    xlabel(axes,strcat('Time (s)')); 
+    %xlim(axes,[0 musicData2.GetDurationTotal]);
+    ylabel(axes,'Amplitude');
+    ylimits = get(axes, 'YLim'); % get the y-axis limits
     musicData2.plotdata = [ylimits(1):0.1:ylimits(2)];
-    %figure(gcf);
-    hline = plot(zeros(size(musicData2.plotdata)), musicData2.plotdata, 'r'); % plot the marker
+    
+    hline = plot(zeros(size(musicData2.plotdata)), musicData2.plotdata, 'r','Parent',axes); % plot the marker
     
     if isequal(fileSelected,0)
         disp('User selected Cancel')
@@ -200,35 +205,36 @@ elseif(get(handles.position2Button,'Value') == 1.0)
     set(handles.durationPos2SecEnd,'String',editorData.musicData.GetDurationSec);
 else
     % If position 1 is selected set the variables for the first musicData
-    % object 
-    
-    [musicData1.soundStream,musicData1.sampleRate] = audioread(fileSelected); 
-    
+    % object     
+    axes = axis1;
+    cla(axes);
+    [musicData1.soundStream,musicData1.sampleRate] = audioread(fileSelected);     
     musicData1.audioPlayer = audioplayer(musicData1.soundStream, musicData1.sampleRate);
-    musicData1.audioPlayer.TimerPeriod = 0.01;    
-    axis = findobj(gcf,'Tag','audioAxesPos1');
-    musicData1.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData1.audioPlayer, axis, musicData1.plotdata};
+    musicData1.audioPlayer.TimerPeriod = 0.01; 
+    musicData1.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData1.audioPlayer, axes, musicData1.plotdata};
     musicData1.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
     
-    plot(musicData1.soundStream,'b'); % plot audio data
-    title(fileSelected);
-    xlabel(strcat('Time (s)'));
+    gcf; hold on;   
+    display(gcf)
+    plot(musicData1.soundStream,'b','Parent',axes); % plot audio data
+    title(axes,fileSelected);
+    xlabel(axes,strcat('Time (s)'));
     
-    ylabel('Amplitude');
-    ylimits = get(gca, 'YLim'); % get the y-axis limits
+    ylabel(axes,'Amplitude');
+    ylimits = get(axes, 'YLim'); % get the y-axis limits
     musicData1.plotdata = [ylimits(1):0.1:ylimits(2)];
     %figure(gcf);
-    hline = plot(zeros(size(musicData1.plotdata)), musicData1.plotdata, 'r'); % plot the marker
+    %hold(axes);
+    hline = plot(zeros(size(musicData1.plotdata)), musicData1.plotdata, 'r','Parent',axes); % plot the marker
 
-    %plot(soundStream);
     if isequal(fileSelected,0)
         disp('User selected Cancel')
     else
         disp(['User selected ', fullfile(pathname, fileSelected)])
         set(handles.audioFileSelectedText,'String',fileSelected);
-    end    
-    editorData.musicData = musicData1;   
+    end          
     musicData1.filename = fileSelected;
+    editorData.musicData = musicData1; 
     set(handles.durationText1,'String',editorData.musicData.GetDurationAsStr);
     set(handles.durationPos1MinEnd,'String',editorData.musicData.GetDurationMin);
     set(handles.durationPos1SecEnd,'String',editorData.musicData.GetDurationSec);
@@ -244,7 +250,7 @@ function Save_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global editorData;
 
-if(editorData.musicData.filename == 0)
+if(isempty(editorData.musicData) == 1)
     usefulFunctions.showNoFileError;
 else
     if(~isempty(editorData.musicData.soundStream))
@@ -260,21 +266,40 @@ function playButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global editorData;
-
-axes(handles.audioAxesPos1);
-cla;
+global axis1;
+global axis2;
 
 % If the sound stream is empty show an error    
-if(isempty(editorData.musicData))              
+if(isempty(editorData.musicData) || isempty(editorData.musicData.filename))              
     usefulFunctions.showNoFileError;    
 else
     % otherwise create a new audioplayer object to be assigned to the
     % global editorData var and play it
+     if(handles.position2Button.Value == 1)
+         axis = axis2;
+     else
+         axis = axis1;
+     end
+     
+     %cla(axis);
+%     plot(editorData.musicData.soundStream,'b','Parent',axis); % plot audio data
+%     title(editorData.musicData.filename);
+%     xlabel(strcat('Time (s)'));
+%     
+%     ylabel('Amplitude');
+%     ylimits = get(gca, 'YLim'); % get the y-axis limits
+%     musicData1.plotdata = [ylimits(1):0.1:ylimits(2)];
+%     %figure(gcf);
+%     hline = plot(zeros(size(musicData1.plotdata)), musicData1.plotdata, 'r','Parent',axis); % plot the marker
+    usefulFunctions.SetupPlot(axis);
     editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream ,editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);
+    editorData.musicData.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,editorData.musicData.audioPlayer, axis, editorData.musicData.plotdata};
+    editorData.musicData.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
     play(editorData.musicData.audioPlayer);
     % set UI fields
     set(handles.outputDevList,'Enable','off');
     set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
+    set(handles.pauseButton,'String','Pause');
 end
 
 
@@ -307,13 +332,23 @@ function stopButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global editorData;
+global axis1;
+global axis2;
 
 if(isempty(editorData.musicData))
     usefulFunctions.showNoFileError;
 else
     stop(editorData.musicData.audioPlayer);
     set(handles.pauseButton,'string','Pause');
-    plot(editorData.musicData.soundStream,'b');
+    if(handles.position1Button.Value == 1)
+        axis = axis1;
+        cla(axis);
+        plot(editorData.musicData.soundStream,'b','Parent',axis);
+    else
+        axis = axis2;        
+        cla(axis);
+        plot(editorData.musicData.soundStream,'b','Parent',axis);
+    end
     set(handles.outputDevList,'Enable','on');
 end
 
@@ -817,11 +852,14 @@ function playButtonPos1_Callback(hObject, eventdata, handles)
 
 global musicData1;
 global editorData;
+global axis1;
 
 if(usefulFunctions.validateMusicData1 == 1)
     usefulFunctions.showNoFileError;    
 else
     if(usefulFunctions.validateStartEndPos1(handles) == 1)      
+        axes = axis1;
+        
         minStart = str2num(get(handles.durationPos1MinStart,'String'));
         secStart = str2num(get(handles.durationPos1SecStart,'String'));
         totalStart = minStart * 60 + secStart;
@@ -831,7 +869,13 @@ else
         totalEnd = minEnd * 60 + secEnd ; 
         
         tempAudioPlayer = audioplayer(musicData1.soundStream ,musicData1.sampleRate,16,editorData.outputDeviceSelId);
-        beginningSample = musicData1.sampleRate * totalStart + 80;
+        beginningSample =(musicData1.sampleRate * totalStart) + 80;
+        ylimits = get(axes, 'YLim'); % get the y-axis limits
+        plotdata = [ylimits(1):0.1:ylimits(2)];
+        
+        tempAudioPlayer.TimerPeriod = 0.01; 
+        tempAudioPlayer.TimerFcn = {@usefulFunctions.plotMarker,tempAudioPlayer, axes, plotdata};
+        
         endSample = musicData1.sampleRate * totalEnd ;
         if(endSample > length(musicData1.soundStream))
             endSample = length(musicData1.soundStream);
@@ -854,12 +898,14 @@ function playButtonPos2_Callback(hObject, eventdata, handles)
 
 global musicData2;
 global editorData;
+global axis2;
 
 % validate sound stream 
 if(usefulFunctions.validateMusicData2 == 1)              
     usefulFunctions.showNoFileError;    
 else
     if(usefulFunctions.validateStartEndPos2(handles) == 1)      
+        axes = axis2;
         minStart = str2num(get(handles.durationPos2MinStart,'String'));
         secStart = str2num(get(handles.durationPos2SecStart,'String'));
         totalStart = minStart * 60 + secStart;
@@ -874,6 +920,12 @@ else
         if(endSample > length(musicData2.soundStream))
             endSample = length(musicData2.soundStream);
         end
+        ylimits = get(axes, 'YLim'); % get the y-axis limits
+        plotdata = [ylimits(1):0.1:ylimits(2)];
+        
+        tempAudioPlayer.TimerPeriod = 0.01; 
+        tempAudioPlayer.TimerFcn = {@usefulFunctions.plotMarker,tempAudioPlayer, axes, plotdata};
+        
         playblocking(tempAudioPlayer,[beginningSample endSample]);
         % set UI fields
         set(handles.sampleRateValue,'String',musicData2.sampleRate);
@@ -894,6 +946,11 @@ global editorData;
 global musicData1;
 global musicData2;
 
+position = 1;
+if(handles.position2Button.Value == 1)
+    position = 2;
+end
+    
 
 if(usefulFunctions.validateStartEndPos1(handles) == 0 || usefulFunctions.validateStartEndPos2(handles) == 0 )
     usefulFunctions.showInvalidNumber;
@@ -901,9 +958,32 @@ else
     if(usefulFunctions.validateSounds == 1)
         usefulFunctions.showNoSoundStreamError;        
     else
-        usefulFunctions.mergeSounds(1,handles);
+        usefulFunctions.mergeSounds(position,handles);
                
     end   
 end
 
     
+
+
+% --- Executes during object creation, after setting all properties.
+function audioAxesPos1_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to audioAxesPos1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: place code in OpeningFcn to populate audioAxesPos1
+global axis1;
+axis1 = hObject;
+set(axis1,'NextPlot','add')
+
+
+% --- Executes during object creation, after setting all properties.
+function audioAxesPos2_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to audioAxesPos2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+global axis2;
+axis2 = hObject;
+set(axis2,'NextPlot','add')

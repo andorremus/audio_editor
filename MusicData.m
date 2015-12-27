@@ -25,19 +25,26 @@ classdef MusicData
         end      
         
         function r = GetDurationAsStr(obj)
-            minutes = int16( ( length(obj.soundStream) / obj.sampleRate ) / 60 );
+            minutes =  ( length(obj.soundStream) / obj.sampleRate ) / 60 ;
+            min = fix(minutes);
             seconds = int16( mod( length(obj.soundStream) / obj.sampleRate,60) );
-            r = strcat(int2str(minutes),'min',int2str(seconds),'s');
+            r = strcat(int2str(min),'min',int2str(seconds),'s');
         end
         
         function r = GetDurationSec(obj)
-            seconds = int16( mod( length(obj.soundStream) / obj.sampleRate,60) );
+            seconds = int16(mod( length(obj.soundStream) / obj.sampleRate,60) );
             r = int2str(seconds);
         end
         
         function r = GetDurationMin(obj)
-            minutes = int16( ( length(obj.soundStream) / obj.sampleRate ) / 60 );
-            r = int2str(minutes);
+            minutes =   (length(obj.soundStream) / obj.sampleRate ) / 60 ;
+            min = fix(minutes);
+            r = int2str(min);
+        end
+        
+        function r = GetDurationTotal(obj)
+            totalDuration = int16( length(obj.soundStream) / obj.sampleRate );
+            r = totalDuration;
         end
         
         
