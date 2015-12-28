@@ -17,7 +17,7 @@ function varargout = audioAppGUI(varargin)
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
-%           
+%
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
 % Edit the above text to modify the response to help audioAppGUI
@@ -161,21 +161,21 @@ function Open_Callback(hObject, eventdata, handles)
 global editorData;
 global musicData1;
 global musicData2;
-global axis2;   
+global axis2;
 global axis1;
 
 % get the file to be opened
 [fileSelected, pathname] = ...
     uigetfile({'*.wav';'*.mp3'},'Audio Track Selector');
 if isequal(fileSelected,0)
-    % If there is no file selected do nothing    
+    % If there is no file selected do nothing
 elseif(get(handles.position2Button,'Value') == 1.0)
     % If position 2 is selected set the variables for the second musicData
     % object
-    axes = axis2;    
+    axes = axis2;
     cla(axes);
     [musicData2.soundStream,musicData2.sampleRate] = audioread(fileSelected);
-    musicData2.audioPlayer = audioplayer(musicData2.soundStream,musicData2.sampleRate);  
+    musicData2.audioPlayer = audioplayer(musicData2.soundStream,musicData2.sampleRate);
     %axis = findobj(gcf,'Tag','audioAxesPos2')
     musicData2.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData2.audioPlayer, axes, musicData2.plotdata};
     musicData2.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
@@ -183,7 +183,7 @@ elseif(get(handles.position2Button,'Value') == 1.0)
     %gcf; hold on;
     plot(musicData2.soundStream,'b','Parent',axes); % plot audio data
     title(axes,fileSelected);
-    xlabel(axes,strcat('Time (s)')); 
+    xlabel(axes,strcat('Time (s)'));
     %xlim(axes,[0 musicData2.GetDurationTotal]);
     ylabel(axes,'Amplitude');
     ylimits = get(axes, 'YLim'); % get the y-axis limits
@@ -205,16 +205,16 @@ elseif(get(handles.position2Button,'Value') == 1.0)
     set(handles.durationPos2SecEnd,'String',editorData.musicData.GetDurationSec);
 else
     % If position 1 is selected set the variables for the first musicData
-    % object     
+    % object
     axes = axis1;
     cla(axes);
-    [musicData1.soundStream,musicData1.sampleRate] = audioread(fileSelected);     
+    [musicData1.soundStream,musicData1.sampleRate] = audioread(fileSelected);
     musicData1.audioPlayer = audioplayer(musicData1.soundStream, musicData1.sampleRate);
-    musicData1.audioPlayer.TimerPeriod = 0.01; 
+    musicData1.audioPlayer.TimerPeriod = 0.01;
     musicData1.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData1.audioPlayer, axes, musicData1.plotdata};
     musicData1.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
     
-    gcf; hold on;   
+    gcf; hold on;
     display(gcf)
     plot(musicData1.soundStream,'b','Parent',axes); % plot audio data
     title(axes,fileSelected);
@@ -226,15 +226,15 @@ else
     %figure(gcf);
     %hold(axes);
     hline = plot(zeros(size(musicData1.plotdata)), musicData1.plotdata, 'r','Parent',axes); % plot the marker
-
+    
     if isequal(fileSelected,0)
         disp('User selected Cancel')
     else
         disp(['User selected ', fullfile(pathname, fileSelected)])
         set(handles.audioFileSelectedText,'String',fileSelected);
-    end          
+    end
     musicData1.filename = fileSelected;
-    editorData.musicData = musicData1; 
+    editorData.musicData = musicData1;
     set(handles.durationText1,'String',editorData.musicData.GetDurationAsStr);
     set(handles.durationPos1MinEnd,'String',editorData.musicData.GetDurationMin);
     set(handles.durationPos1SecEnd,'String',editorData.musicData.GetDurationSec);
@@ -257,7 +257,7 @@ else
         audiowrite(editorData.musicData.filename,editorData.musicData.soundStream,editorData.musicData.sampleRate);
     else
         usefulFunctions.showNoSoundStreamError;
-    end    
+    end
 end
 
 % --- Executes on button press in playButton.
@@ -269,28 +269,28 @@ global editorData;
 global axis1;
 global axis2;
 
-% If the sound stream is empty show an error    
-if(isempty(editorData.musicData) || isempty(editorData.musicData.filename))              
-    usefulFunctions.showNoFileError;    
+% If the sound stream is empty show an error
+if(isempty(editorData.musicData) || isempty(editorData.musicData.filename))
+    usefulFunctions.showNoFileError;
 else
     % otherwise create a new audioplayer object to be assigned to the
     % global editorData var and play it
-     if(handles.position2Button.Value == 1)
-         axis = axis2;
-     else
-         axis = axis1;
-     end
-     
-     %cla(axis);
-%     plot(editorData.musicData.soundStream,'b','Parent',axis); % plot audio data
-%     title(editorData.musicData.filename);
-%     xlabel(strcat('Time (s)'));
-%     
-%     ylabel('Amplitude');
-%     ylimits = get(gca, 'YLim'); % get the y-axis limits
-%     musicData1.plotdata = [ylimits(1):0.1:ylimits(2)];
-%     %figure(gcf);
-%     hline = plot(zeros(size(musicData1.plotdata)), musicData1.plotdata, 'r','Parent',axis); % plot the marker
+    if(handles.position2Button.Value == 1)
+        axis = axis2;
+    else
+        axis = axis1;
+    end
+    
+    %cla(axis);
+    %     plot(editorData.musicData.soundStream,'b','Parent',axis); % plot audio data
+    %     title(editorData.musicData.filename);
+    %     xlabel(strcat('Time (s)'));
+    %
+    %     ylabel('Amplitude');
+    %     ylimits = get(gca, 'YLim'); % get the y-axis limits
+    %     musicData1.plotdata = [ylimits(1):0.1:ylimits(2)];
+    %     %figure(gcf);
+    %     hline = plot(zeros(size(musicData1.plotdata)), musicData1.plotdata, 'r','Parent',axis); % plot the marker
     usefulFunctions.SetupPlot(axis);
     editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream ,editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);
     editorData.musicData.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,editorData.musicData.audioPlayer, axis, editorData.musicData.plotdata};
@@ -310,19 +310,19 @@ function pauseButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 global editorData;
 
-if(isempty(editorData.musicData))        
+if(isempty(editorData.musicData))
     usefulFunctions.showNoFileError
 else
     if(editorData.musicData.audioPlayer.isplaying)
         pause(editorData.musicData.audioPlayer)
-        set(handles.pauseButton,'string','Resume');        
+        set(handles.pauseButton,'string','Resume');
     elseif(get(editorData.musicData.audioPlayer,'CurrentSample') == 1)
-        usefulFunctions.showStoppedError;       
+        usefulFunctions.showStoppedError;
     else
         resume(editorData.musicData.audioPlayer)
         set(handles.pauseButton,'string','Pause');
     end
-    display(editorData.musicData.audioPlayer);    
+    display(editorData.musicData.audioPlayer);
     set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
 end
 
@@ -345,7 +345,7 @@ else
         cla(axis);
         plot(editorData.musicData.soundStream,'b','Parent',axis);
     else
-        axis = axis2;        
+        axis = axis2;
         cla(axis);
         plot(editorData.musicData.soundStream,'b','Parent',axis);
     end
@@ -368,25 +368,35 @@ function playbackSpeedSlider_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 global editorData;
+global axis1;
+global axis2;
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 set(handles.playbackSpeedNoText,'String',get(hObject,'Value') );
 currentPlaybackSpeed = get(hObject,'Value');
 
+if(handles.position1Button.Value == 1)
+    axes = axis1;
+else
+    axes = axis2;
+end
+
 if(isempty(editorData.musicData))
     
-else   
-     if(editorData.musicData.audioPlayer.isplaying)               
-         currentSample = get(editorData.musicData.audioPlayer,'CurrentSample') / editorData.musicData.sampleRate;
-         editorData.musicData.sampleRate = ((editorData.musicData.sampleRate / editorData.playbackSpeed )* currentPlaybackSpeed);         
-         editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);         
-         resumeSample = currentSample * editorData.musicData.audioPlayer.sampleRate;
-         play(editorData.musicData.audioPlayer,resumeSample);    
-     else         
+else
+    if(editorData.musicData.audioPlayer.isplaying)
+        currentSample = get(editorData.musicData.audioPlayer,'CurrentSample') / editorData.musicData.sampleRate;
+        editorData.musicData.sampleRate = ((editorData.musicData.sampleRate / editorData.playbackSpeed )* currentPlaybackSpeed);
+        editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);
+        resumeSample = currentSample * editorData.musicData.audioPlayer.sampleRate;
+        resumeSample = fix(resumeSample);
+        editorData.ReplotData(axes);
+        play(editorData.musicData.audioPlayer,resumeSample);
+    else
         editorData.musicData.sampleRate = (editorData.musicData.sampleRate / editorData.playbackSpeed) * currentPlaybackSpeed;
-     end  
-     
-     set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
+    end
+    
+    set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
 end
 
 editorData.playbackSpeed = currentPlaybackSpeed;
@@ -415,7 +425,7 @@ function outputDevList_Callback(hObject, eventdata, handles)
 %        contents{get(hObject,'Value')} returns selected item from outputDevList
 % Sets the output device
 global editorData;
-editorData.outputDeviceSelId = hObject.Value - 1; 
+editorData.outputDeviceSelId = hObject.Value - 1;
 
 % --- Executes during object creation, after setting all properties.
 function outputDevList_CreateFcn(hObject, eventdata, handles)
@@ -429,8 +439,8 @@ end
 x = audiodevinfo(0); % get the number of available output devices for the loop
 if x > 0
     for i = 1:x
-        outDevArr{i} = audiodevinfo(0,(i-1)); % insert out dev into array        
-    end 
+        outDevArr{i} = audiodevinfo(0,(i-1)); % insert out dev into array
+    end
     set(hObject, 'String', outDevArr); % populate the menu with the string array
 end
 
@@ -460,7 +470,7 @@ end
 x = audiodevinfo(1) % get the number of available input devices for the loop
 if x > 0
     for i = 1:x
-        inputDevArr{i} =  audiodevinfo(1,(i-1)); % insert input dev into array       
+        inputDevArr{i} =  audiodevinfo(1,(i-1)); % insert input dev into array
     end
     set(hObject, 'String', inputDevArr); % populate the menu with the string array
 end
@@ -470,22 +480,30 @@ end
 function volumeSlider_Callback(hObject, ~, handles)
 
 global editorData;
+global axis1;
+global axis2;
 currentVolume = hObject.Value;
+if(handles.position1Button.Value == 1)
+    axes = axis1;
+else
+    axes = axis2;
+end
 
 if(isempty(editorData.musicData))
     
-else   
-     if(editorData.musicData.audioPlayer.isplaying)       
-         % Get the current sample before reinitializing the audio player
-         resumeSample = get(editorData.musicData.audioPlayer,'CurrentSample') / editorData.musicData.sampleRate * editorData.musicData.audioPlayer.sampleRate;
-         editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume ) * currentVolume);     
-         editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);        
-         play(editorData.musicData.audioPlayer,resumeSample);    
-     else         
-        editorData.musicData.soundStream = (editorData.musicData.soundStream / editorData.volume) * currentVolume;        
-     end  
-     
-     set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
+else
+    if(editorData.musicData.audioPlayer.isplaying)
+        % Get the current sample before reinitializing the audio player
+        resumeSample = get(editorData.musicData.audioPlayer,'CurrentSample') / editorData.musicData.sampleRate * editorData.musicData.audioPlayer.sampleRate;
+        editorData.musicData.soundStream = ((editorData.musicData.soundStream / editorData.volume ) * currentVolume);
+        editorData.musicData.audioPlayer = audioplayer(editorData.musicData.soundStream, editorData.musicData.sampleRate,16,editorData.outputDeviceSelId);
+        editorData.ReplotData(axes);
+        play(editorData.musicData.audioPlayer,resumeSample);
+    else
+        editorData.musicData.soundStream = (editorData.musicData.soundStream / editorData.volume) * currentVolume;
+    end
+    
+    set(handles.sampleRateValue,'String',editorData.musicData.sampleRate);
 end
 
 editorData.volume = currentVolume;
@@ -855,9 +873,9 @@ global editorData;
 global axis1;
 
 if(usefulFunctions.validateMusicData1 == 1)
-    usefulFunctions.showNoFileError;    
+    usefulFunctions.showNoFileError;
 else
-    if(usefulFunctions.validateStartEndPos1(handles) == 1)      
+    if(usefulFunctions.validateStartEndPos1(handles) == 1)
         axes = axis1;
         
         minStart = str2num(get(handles.durationPos1MinStart,'String'));
@@ -866,14 +884,14 @@ else
         
         minEnd = str2num(get(handles.durationPos1MinEnd,'String'));
         secEnd = str2num(get(handles.durationPos1SecEnd,'String'));
-        totalEnd = minEnd * 60 + secEnd ; 
+        totalEnd = minEnd * 60 + secEnd ;
         
-        tempAudioPlayer = audioplayer(musicData1.soundStream ,musicData1.sampleRate,16,editorData.outputDeviceSelId);
+        tempAudioPlayer = audioplayer(musicData1.soundStream * handles.volumeSlider.Value,musicData1.sampleRate * handles.playbackSpeedSlider,16,editorData.outputDeviceSelId);
         beginningSample =(musicData1.sampleRate * totalStart) + 80;
         ylimits = get(axes, 'YLim'); % get the y-axis limits
         plotdata = [ylimits(1):0.1:ylimits(2)];
         
-        tempAudioPlayer.TimerPeriod = 0.01; 
+        tempAudioPlayer.TimerPeriod = 0.01;
         tempAudioPlayer.TimerFcn = {@usefulFunctions.plotMarker,tempAudioPlayer, axes, plotdata};
         
         endSample = musicData1.sampleRate * totalEnd ;
@@ -900,11 +918,11 @@ global musicData2;
 global editorData;
 global axis2;
 
-% validate sound stream 
-if(usefulFunctions.validateMusicData2 == 1)              
-    usefulFunctions.showNoFileError;    
+% validate sound stream
+if(usefulFunctions.validateMusicData2 == 1)
+    usefulFunctions.showNoFileError;
 else
-    if(usefulFunctions.validateStartEndPos2(handles) == 1)      
+    if(usefulFunctions.validateStartEndPos2(handles) == 1)
         axes = axis2;
         minStart = str2num(get(handles.durationPos2MinStart,'String'));
         secStart = str2num(get(handles.durationPos2SecStart,'String'));
@@ -914,7 +932,10 @@ else
         secEnd = str2num(get(handles.durationPos2SecEnd,'String'));
         totalEnd = minEnd * 60 + secEnd ;
         
-        tempAudioPlayer = audioplayer(musicData2.soundStream ,musicData2.sampleRate,16,editorData.outputDeviceSelId);
+        
+        tempAudioPlayer = audioplayer((musicData2.soundStream * handles.volumeSlider.Value),...
+                                        (musicData2.sampleRate * handles.playbackSpeedSlider.Value),...
+                                        16,editorData.outputDeviceSelId);
         beginningSample = (musicData2.sampleRate * totalStart ) + 80;
         endSample = musicData2.sampleRate * totalEnd ;
         if(endSample > length(musicData2.soundStream))
@@ -923,7 +944,7 @@ else
         ylimits = get(axes, 'YLim'); % get the y-axis limits
         plotdata = [ylimits(1):0.1:ylimits(2)];
         
-        tempAudioPlayer.TimerPeriod = 0.01; 
+        tempAudioPlayer.TimerPeriod = 0.01;
         tempAudioPlayer.TimerFcn = {@usefulFunctions.plotMarker,tempAudioPlayer, axes, plotdata};
         
         playblocking(tempAudioPlayer,[beginningSample endSample]);
@@ -950,20 +971,19 @@ position = 1;
 if(handles.position2Button.Value == 1)
     position = 2;
 end
-    
+
 
 if(usefulFunctions.validateStartEndPos1(handles) == 0 || usefulFunctions.validateStartEndPos2(handles) == 0 )
     usefulFunctions.showInvalidNumber;
 else
     if(usefulFunctions.validateSounds == 1)
-        usefulFunctions.showNoSoundStreamError;        
+        usefulFunctions.showNoSoundStreamError;
     else
-        usefulFunctions.mergeSounds(position,handles);
-               
-    end   
+        usefulFunctions.mergeSounds(position,handles);        
+    end
 end
 
-    
+
 
 
 % --- Executes during object creation, after setting all properties.
