@@ -26,7 +26,7 @@ classdef EditorData
             global editorData;
             cla(axes);
             plot(editorData.musicData.soundStream,'b','Parent',axes); % plot audio data
-            title(editorData.musicData.filename);
+            title(editorData.musicData.filename,'Parent',axes);
             xlabel(strcat('Time (s)'));
             ylabel('Amplitude');
             ylimits = get(axes, 'YLim'); % get the y-axis limits

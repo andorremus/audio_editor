@@ -140,16 +140,10 @@ classdef usefulFunctions
             
             if(position == 1)
                 wholeNewSound = vertcat(piece1,piece2);
-                %audio = audioplayer(wholeNewSound,newSampleRate);
-                %playblocking(audio);
                 % Since we've selected the position 1, assign the new sound
                 % data into music data 1 and set it as selected for the editor
                 musicData1.soundStream = wholeNewSound;
-                musicData1.sampleRate = newSampleRate;
-                musicData1.audioPlayer = audioplayer(musicData1.soundStream, musicData1.sampleRate);
-                musicData1.audioPlayer.TimerPeriod = 0.01;
-                musicData1.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData1.audioPlayer, axis1, musicData1.plotdata};
-                musicData1.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds                
+                musicData1.sampleRate = newSampleRate;             
                 editorData.ReplotCustomData(axis1,musicData1);                     
                 musicData1.filename = 'MergedSound.wav';
                 editorData.musicData = musicData1;
@@ -159,20 +153,11 @@ classdef usefulFunctions
                 set(handles.durationPos1SecEnd,'String',editorData.musicData.GetDurationSec);
             else
                 wholeNewSound = vertcat(piece2,piece1);
-                %audio = audioplayer(wholeNewSound,newSampleRate);
-                %playblocking(audio);
                 % Since we've selected the position 2, assign the new sound
                 % data into music data 2 and set it as selected for the editor
                 musicData2.soundStream = wholeNewSound;
                 musicData2.sampleRate = newSampleRate;
-                musicData2.audioPlayer = audioplayer(musicData2.soundStream, musicData2.sampleRate);
-                musicData2.audioPlayer.TimerPeriod = 0.01;
-                musicData2.audioPlayer.TimerFcn = {@usefulFunctions.plotMarker,musicData2.audioPlayer, axis2, musicData2.plotdata};
-                musicData2.audioPlayer.TimerPeriod = 0.01; % period of the timer in seconds
-                editorData.ReplotCustomData(axis2,musicData1);      
-                %figure(gcf);
-                %usefulFunctions.SetupPlot(axis);
-                %hline = plot(zeros(size(musicData2.plotdata)), musicData2.plotdata, 'r'); % plot the marker                
+                editorData.ReplotCustomData(axis2,musicData1);                  
                 musicData2.filename = 'MergedSound.wav';
                 editorData.musicData = musicData2;
                 
